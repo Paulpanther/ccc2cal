@@ -29,6 +29,8 @@ async function fetchCalendar() {
   cal.method(ICalCalendarMethod.REQUEST);
 
   for (const eventId of events) {
+    console.log(`Loading event ${eventId}`);
+
     const eventRes = await fetch(`${base}/event/${eventId}`, {
       headers: {
         'Content-Type': "application/json",
@@ -36,12 +38,25 @@ async function fetchCalendar() {
       }
     });
     const event = await eventRes.json();
+
+    let room = undefined;
+    if (event['room']) {
+      const roomRes = await fetch(`${base}/room/${event['room']}`, {
+        headers: {
+          'Content-Type': "application/json",
+          Authorization: `Token ${token}`,
+        }
+      });
+      const roomData = await roomRes.json();
+      room = `${roomData['name']} ${roomData['public_url']}`;
+    }
+
     cal.createEvent({
       start: new Date(event['schedule_start']),
       end: new Date(event['schedule_end']),
       summary: event['name'],
       description: event['description'],
-      location: 'my room',
+      location: room,
       url: event['url']
     });
   }
